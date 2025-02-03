@@ -60,22 +60,42 @@ def check_for_updates(csv_filename: str) -> None:
         csv_filename (str): Path to the CSV file storing previous trade data.
     """
     new_data = scrape_website()
+    new_data['Transaction Date']= pd.to_datetime(new_data['Transaction Date'])
+
+    latest_date_from_new = max(new_data['Transaction Date'])
+
+    logging.info(f"length of new data is {len(new_data)}")
+    logging.info(f"{latest_date_from_new}")
     
+
     if not os.path.exists(csv_filename):
         new_data.to_csv(csv_filename, index=False)
         logger.info('Initial data saved')
         return False
     
     old_data = pd.read_csv(csv_filename)
+
+    old_data['Transaction Date']= pd.to_datetime(old_data['Transaction Date'])
+    latest_date_from_old = max(old_data['Transaction Date'])
+
+    # new_data.to_csv('new_data.csv',index=False)
+
+    logging.info(f"length of old data is {len(old_data)}")
+    logging.info(f"{latest_date_from_old}")
     
-    if len(new_data) > len(old_data):  # Check if new trades have been added
-        new_data.to_csv(csv_filename, index=False)
-        logger.info('Data updated and saved')
+    if latest_date_from_new > latest_date_from_old:  # Check if new trades have been added
+        # Get all of the new data
+        only_new_trades = new_data.loc[new_data['Transaction Date']>latest_date_from_old]
+
+        only_new_trades.to_csv('latest_trades.csv', index=False)
+
+        new_data.to_csv('trades.csv', index=False)
+
+        logger.info('New data added to trades.csv and new trades saved to latest_trades.csv')
         return True
     else:
-        logger.info('No changes')
+        logger.info('No new trades found')
         return False
-
 
 def send_email(recipient_email: Union[str, List[str]], 
                subject: str, 
@@ -120,7 +140,7 @@ def send_email(recipient_email: Union[str, List[str]],
         <p>Hi,</p>
         <p>Please see the latest trades from Pelosi's account below. </p>
         <p>For more information, visit: <a href="https://valueinvesting.io/nancy-pelosi-stock-trades-tracker">Nancy Pelosi Stock Trades Tracker</a></p>
-        <p>Good luck!,<br>Mark</p>
+        <p>Good luck!<br>Mark</p>
         {df_html}
     </body>
     </html>
@@ -141,13 +161,13 @@ if __name__ == "__main__":
     Ensures the script runs only when executed directly, not when imported as a module.
     """
         
-    #is_update = check_for_updates('trades.csv')
+    is_update = check_for_updates('trades.csv')
 
-    is_update = True
+    #is_update = True
 
     if is_update:
 
-        updated_df = pd.read_csv('trades.csv')
+        updated_df = pd.read_csv('latest_trades.csv')
 
         updated_df ['Update Date'] = datetime.now().date().isoformat()
 
