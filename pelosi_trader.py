@@ -1,16 +1,18 @@
+import logging
+import os
+import smtplib
+import time
+from datetime import datetime
+from typing import List, Union
+
+import pandas as pd
+from dotenv import load_dotenv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-from datetime import datetime
-import pandas as pd
-import time
-import os
-import logging
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -75,8 +77,30 @@ def check_for_updates(csv_filename: str) -> None:
         return False
 
 
-def send_email(recipient_email, subject, body,df):
-    # Get credentials from environment variables
+def send_email(recipient_email: Union[str, List[str]], 
+               subject: str, 
+               df: pd.DataFrame,
+               body: str="") -> None:
+    """
+    Send an email with the latest trades from Pelosi's account.
+
+    This function creates and sends an HTML email containing a DataFrame of trade information
+    and a link to the Nancy Pelosi Stock Trades Tracker.
+
+    Args:
+        recipient_email (Union[str, List[str]]): Email address(es) of the recipient(s).
+        subject (str): Subject line of the email.
+        body (str): Plain text body of the email.
+        df (pd.DataFrame): DataFrame containing the trade information to be included in the email.
+
+    Returns:
+        None
+
+    Raises:
+        smtplib.SMTPException: If there's an error in sending the email.
+        KeyError: If the required environment variables are not set.
+
+    """
     sender_email = os.environ["EMAIL_USER"] or os.getenv("EMAIL_USER")
     app_password = os.environ["EMAIL_PASSWORD"] or os.getenv("EMAIL_PASSWORD")
 
@@ -94,9 +118,10 @@ def send_email(recipient_email, subject, body,df):
     <html>
     <body>
         <p>Hi,</p>
-        <p>Please find below the latest trades from Pelosi's account:</p>
+        <p>Please see the latest trades from Pelosi's account below. </p>
+        <p>For more information, visit: <a href="https://valueinvesting.io/nancy-pelosi-stock-trades-tracker">Nancy Pelosi Stock Trades Tracker</a></p>
+        <p>Good luck!,<br>Mark</p>
         {df_html}
-        <p> Good luck!,<br>Mark</p>
     </body>
     </html>
     """
@@ -108,9 +133,7 @@ def send_email(recipient_email, subject, body,df):
         server.login(sender_email, app_password)
         server.send_message(message)
 
-    print("Email sent successfully")
-
-
+    logger.info("Email sent successfully")
 
 
 if __name__ == "__main__":
@@ -131,6 +154,6 @@ if __name__ == "__main__":
         # Usage example
         recipient_email = ["mark.golob275@gmail.com"]
         subject = "Pelosi Trades Update"
-        body = "Attached is the latest updated stock trade data."
+        #body = "Attached is the latest updated stock trade data."
 
-        send_email(recipient_email, subject, body,updated_df)
+        send_email(recipient_email, subject,updated_df)
