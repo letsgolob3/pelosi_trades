@@ -2,6 +2,7 @@ import logging
 import os
 import smtplib
 import time
+import uuid
 from datetime import datetime
 from typing import List, Union
 
@@ -36,11 +37,16 @@ def scrape_website(github_action: bool) -> pd.DataFrame:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     
     else:
-        options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--no-sandbox")  # Required for GitHub Actions
-        options.add_argument("--disable-dev-shm-usage")  # Prevent shared memory issues
-        options.add_argument(f"--user-data-dir={os.getcwd()}/chrome_data")  # Unique temp dir
+    # Generate a random unique ID for the session
+        unique_id = str(uuid.uuid4())  # Create a unique ID
+        temp_dir = os.path.join(os.getcwd(), "chrome_data", unique_id)  # Unique temp directory
+        os.makedirs(temp_dir, exist_ok=True)
 
+        # Set Chrome options
+        options.add_argument("--headless")  # Run in headless mode (no GUI)
+        options.add_argument("--no-sandbox")  # Required for GitHub Actions
+        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues in GitHub Actions
+        options.add_argument(f"--user-data-dir={temp_dir}")  # Use the unique temp directory
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     
     try:
