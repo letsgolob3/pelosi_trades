@@ -71,7 +71,6 @@ def check_for_updates(csv_filename: str) -> None:
     if not os.path.exists(csv_filename):
         new_data.to_csv(csv_filename, index=False)
         logger.info('Initial data saved')
-        return False
     
     old_data = pd.read_csv(csv_filename)
 
@@ -87,15 +86,24 @@ def check_for_updates(csv_filename: str) -> None:
         # Get all of the new data
         only_new_trades = new_data.loc[new_data['Transaction Date']>latest_date_from_old]
 
-        only_new_trades.to_csv('latest_trades.csv', index=False)
+        # only_new_trades.to_csv('latest_trades.csv', index=False)
 
         new_data.to_csv('trades.csv', index=False)
 
         logger.info('New data added to trades.csv and new trades saved to latest_trades.csv')
-        return True
+
+        only_new_trades ['Update Date'] = datetime.now().date().isoformat()
+
+        # Usage example
+        recipient_email = ["mark.golob275@gmail.com"]
+        subject = "Pelosi Trades Update"
+        #body = "Attached is the latest updated stock trade data."
+
+        send_email(recipient_email, subject,only_new_trades)
+
+
     else:
         logger.info('No new trades found')
-        return False
 
 def send_email(recipient_email: Union[str, List[str]], 
                subject: str, 
@@ -161,19 +169,6 @@ if __name__ == "__main__":
     Ensures the script runs only when executed directly, not when imported as a module.
     """
         
-    is_update = check_for_updates('trades.csv')
+    check_for_updates('trades.csv')
 
-    #is_update = True
-
-    if is_update:
-
-        updated_df = pd.read_csv('latest_trades.csv')
-
-        updated_df ['Update Date'] = datetime.now().date().isoformat()
-
-        # Usage example
-        recipient_email = ["mark.golob275@gmail.com"]
-        subject = "Pelosi Trades Update"
-        #body = "Attached is the latest updated stock trade data."
-
-        send_email(recipient_email, subject,updated_df)
+        
