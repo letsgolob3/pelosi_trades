@@ -78,7 +78,7 @@ def check_for_updates(csv_filename: str) -> None:
 def send_email(recipient_email, subject, body,df):
     # Get credentials from environment variables
     sender_email = os.environ["EMAIL_USER"] or os.getenv("EMAIL_USER")
-    app_password = os.environ["EMAIL_PASSWORD"] or os.getenv("EMAIL_PASSWORD")
+    app_password = os.environ["EMAIL_PASS"] or os.getenv("EMAIL_PASSWORD")
 
     # Create message
     message = MIMEMultipart()
