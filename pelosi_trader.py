@@ -22,15 +22,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Function to scrape the website and return data as a pandas DataFrame
-def scrape_website() -> pd.DataFrame:
+def scrape_website(github_action: bool) -> pd.DataFrame:
     """
     Scrapes the stock trade table from the specified website and returns it as a pandas DataFrame.
     
     Returns:
         pd.DataFrame: DataFrame containing the scraped table data.
     """
+
     options = webdriver.ChromeOptions()
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    if not github_action:
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
+    else:
+        options.add_argument("--headless")  # Run in headless mode
+        options.add_argument("--no-sandbox")  # Required for GitHub Actions
+        options.add_argument("--disable-dev-shm-usage")  # Prevent shared memory issues
+        options.add_argument(f"--user-data-dir={os.getcwd()}/chrome_data")  # Unique temp dir
+
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     
     try:
         url = 'https://valueinvesting.io/nancy-pelosi-stock-trades-tracker'
@@ -52,14 +63,14 @@ def scrape_website() -> pd.DataFrame:
         driver.quit()  # Ensure the driver is closed after scraping
 
 
-def check_for_updates(csv_filename: str) -> None:
+def check_for_updates(csv_filename: str,github_action) -> None:
     """
     Checks for new stock trade records and updates the CSV file if changes are detected.
     
     Args:
         csv_filename (str): Path to the CSV file storing previous trade data.
     """
-    new_data = scrape_website()
+    new_data = scrape_website(github_action)
     new_data['Transaction Date']= pd.to_datetime(new_data['Transaction Date'])
 
     latest_date_from_new = max(new_data['Transaction Date'])
@@ -168,7 +179,13 @@ if __name__ == "__main__":
     """
     Ensures the script runs only when executed directly, not when imported as a module.
     """
-        
-    check_for_updates('trades.csv')
+    
+    if os.getenv("EMAIL_USER"):
+        github_action = False
+    else:
+        github_action = True
+    
+
+    check_for_updates('trades.csv',github_action)
 
         
