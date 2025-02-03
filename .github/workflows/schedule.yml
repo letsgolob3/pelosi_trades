@@ -26,4 +26,4 @@ jobs:
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Run the script
-        run: python script.py
+        run: python pelosi_trader.py
