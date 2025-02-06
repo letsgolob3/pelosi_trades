@@ -1,4 +1,4 @@
-name: Daily Scraper
+name: Run Python Script
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  scrape:
+  run_script:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -15,30 +15,44 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
-      - name: Install Chrome and ChromeDriver
+      - name: Install Chrome
         run: |
-          sudo apt-get update
-          
-          # Install Google Chrome from official repo instead of snap
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
-          
-          # Get Chrome version and find corresponding ChromeDriver version
-          CHROME_VERSION=$(google-chrome --version | grep -oP '[0-9]+\.[0-9]+\.[0-9]+')
-          CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION" || echo "")
 
-          if [ -z "$CHROMEDRIVER_VERSION" ]; then
-            echo "No exact ChromeDriver match found, using latest stable version."
-            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
-          fi
-
-          echo "Installing ChromeDriver version $CHROMEDRIVER_VERSION"
+      - name: Install ChromeDriver
+        run: |
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1-3)
+          CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
           wget -N "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set Environment Variables from GitHub Secrets
+        run: |
+          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: Start Xvfb
+        run: Xvfb :99 -screen 0 1024x768x16 &
+
+      - name: Check installed versions
+        run: |
+          google-chrome --version
+          chromedriver --version
+          python --version
+
+      - name: Run the script
+        env:
+          DISPLAY: ":99"  # Required for Selenium in headless mode
+        run: python pelosi_trader.py
