@@ -17,22 +17,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Chrome
-        run: |
-          wget -qO- https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
-          echo 'deb [signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt update
-          sudo apt install -y google-chrome-stable
-
-      - name: Install ChromeDriver
+      - name: Install Chrome and ChromeDriver
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser
-          CHROME_VERSION=$(chromium-browser --version | grep -oP '[0-9]+\.[0-9]+\.[0-9]+')  
-          CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION" || echo "ERROR")
+          
+          # Install Google Chrome from official repo instead of snap
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          
+          # Get Chrome version and find corresponding ChromeDriver version
+          CHROME_VERSION=$(google-chrome --version | grep -oP '[0-9]+\.[0-9]+\.[0-9]+')
+          CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION" || echo "")
 
-          if [[ "$CHROMEDRIVER_VERSION" == "ERROR" ]]; then
-            echo "Could not find matching ChromeDriver version. Using latest stable version."
+          if [ -z "$CHROMEDRIVER_VERSION" ]; then
+            echo "No exact ChromeDriver match found, using latest stable version."
             CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
           fi
 
@@ -41,22 +41,4 @@ jobs:
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
-  
-  
-  
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Set Environment Variables from GitHub Secrets
-        run: |
-          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> $GITHUB_ENV
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
-
-      - name: Start Xvfb
-        run: Xvfb :99 -screen 0 1024x768x16 &
-
-      - name: Run the script
-        env:
-          DISPLAY: ":99"  # Required for Selenium in headless mode
-        run: python pelosi_trader.py
