@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v3
@@ -40,3 +42,15 @@ jobs:
         run: |
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           python pelosi_trader.py
+
+      - name: Commit updated CSV if changed
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "mark.golob.j@gmail.com"
+          git add trades.csv  # Ensure this is the correct file path
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update scraped data"
+          git push
+        continue-on-error: true  # Prevent failures if nothing changes
+
+
+        
