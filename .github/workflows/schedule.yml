@@ -17,27 +17,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install specific version of Google Chrome
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget
-          wget --no-verbose -O /tmp/google-chrome-stable_current_amd64.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y ./tmp/google-chrome-stable_current_amd64.deb
-          rm /tmp/google-chrome-stable_current_amd64.deb
-
-      - name: Set up ChromeDriver
-        uses: nanasess/setup-chromedriver@v2
-        with:
-          chromedriver-version: latest
-
-      - name: Install Python dependencies
-        run: |
           pip install -r requirements.txt
 
-      - name: Set Environment Variables from GitHub Secrets
-        run: |
-          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> $GITHUB_ENV
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+      - name: Set up Chrome and ChromeDriver
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: '132.0.6834.160'  # Specify your desired Chrome version
+          install-chromedriver: true
+          install-dependencies: true
 
       - name: Run the script
         env:
