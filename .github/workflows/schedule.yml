@@ -29,6 +29,11 @@ jobs:
           install-chromedriver: true
           install-dependencies: true
 
+      - name: Set Environment Variables from GitHub Secrets
+        run: |
+          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+
       - name: Run the script
         env:
           DISPLAY: ":99"  # Required for Selenium in headless mode
