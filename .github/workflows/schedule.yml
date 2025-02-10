@@ -25,7 +25,7 @@ jobs:
       - name: Set up Chrome and ChromeDriver
         uses: browser-actions/setup-chrome@v1
         with:
-          chrome-version: '132.0.6834.160'  # Specify your desired Chrome version
+          chrome-version: stable
           install-chromedriver: true
           install-dependencies: true
 
