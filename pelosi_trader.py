@@ -105,7 +105,7 @@ def check_for_updates(csv_filename: str,github_action) -> None:
         only_new_trades ['Update Date'] = datetime.now().date().isoformat()
 
         # Usage example
-        recipient_email = ["mark.golob275@gmail.com","tristanpeters303@gmail.com","thatnelson@gmail.com"]
+        recipient_email = ["mark.golob275@gmail.com","tristanpeters303@gmail.com","thatnelson@gmail.com","andrew.murphy913@gmail.com"]
         subject = "Pelosi Trades Update"
         #body = "Attached is the latest updated stock trade data."
 
