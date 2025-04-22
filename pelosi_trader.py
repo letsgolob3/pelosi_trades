@@ -96,7 +96,7 @@ def check_for_updates(csv_filename: str,github_action) -> None:
         # Get all of the new data
         only_new_trades = new_data.loc[new_data['Transaction Date']>latest_date_from_old]
 
-        # only_new_trades.to_csv('latest_trades.csv', index=False)
+        #only_new_trades.to_csv('latest_trades.csv', index=False)
 
         new_data.to_csv('trades.csv', index=False)
 
